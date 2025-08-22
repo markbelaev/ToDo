@@ -2,13 +2,15 @@ package main
 
 import (
 	"context"
-	"log"
+	"log/slog"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/joho/godotenv"
 )
 
 type ToDo struct {
@@ -19,26 +21,41 @@ type ToDo struct {
 }
 
 func main() {
-	connStr := "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable"
+	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, nil)))
 
-	config, err := pgxpool.ParseConfig(connStr)
+	slog.Info("Connecting to database")
+
+	if err := godotenv.Load(); err != nil {
+		slog.Error("Error loading .env file", "error", err)
+		os.Exit(1)
+	}
+
+	connectString := os.Getenv("DB_CONNECTED_STRING")
+	if connectString == "" {
+		slog.Error("Error connecting to database")
+	}
+
+	config, err := pgxpool.ParseConfig(connectString)
 	if err != nil {
-		log.Fatalf("failed to parse config: %v", err)
+		slog.Error("failed to parse config", "error", err)
+		os.Exit(1)
 	}
 
 	ctx := context.Background()
 
 	pool, err := pgxpool.NewWithConfig(ctx, config)
 	if err != nil {
-		log.Fatalf("failed to create connection: %v", err)
+		slog.Error("failed to create connection", "error", err)
+		os.Exit(1)
 	}
 	defer pool.Close()
 
 	if err := pool.Ping(ctx); err != nil {
-		log.Fatalf("failed to ping connection: %v", err)
+		slog.Error("failed to ping connection", "error", err)
+		os.Exit(1)
 	}
 
-	log.Println("Connected to PostgreSQL")
+	slog.Info("Connected to PostgreSQL")
 
 	r := gin.Default()
 
@@ -53,7 +70,8 @@ func main() {
 	r.PUT("/todos/:id", PutToDoHandler(pool))
 
 	if err := r.Run(":8080"); err != nil {
-		log.Fatalf("failed to run server: %v", err)
+		slog.Error("failed to run server", "error", err)
+		os.Exit(1)
 	}
 }
 
