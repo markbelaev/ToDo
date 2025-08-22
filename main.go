@@ -77,11 +77,14 @@ func main() {
 
 func GetToDoHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		slog.Info("GET /todos")
+
 		ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
 		defer cancel()
 
 		rows, err := pool.Query(ctx, "SELECT id, name, description, status FROM todos")
 		if err != nil {
+			slog.Error("failed to execute query", "error", err)
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": "failed to get rows",
 			})
@@ -92,6 +95,7 @@ func GetToDoHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 		for rows.Next() {
 			var todo ToDo
 			if err := rows.Scan(&todo.ID, &todo.Name, &todo.Description, &todo.Status); err != nil {
+				slog.Error("failed to scan row", "error", err)
 				c.JSON(http.StatusInternalServerError, gin.H{
 					"error": "failed to get rows",
 				})
@@ -101,6 +105,7 @@ func GetToDoHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 			todos = append(todos, todo)
 		}
 
+		slog.Info("Successfully fetched all todos")
 		c.JSON(http.StatusOK, gin.H{
 			"todos": todos,
 		})
@@ -109,12 +114,15 @@ func GetToDoHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 
 func GetToDoIDHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		slog.Info("GET /todos/:id")
+
 		ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
 		defer cancel()
 
 		paramID := c.Param("id")
 		id, err := strconv.Atoi(paramID)
 		if err != nil {
+			slog.Error("failed to parse param id", "error", err)
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": "invalid id",
 			})
@@ -124,12 +132,14 @@ func GetToDoIDHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 		var todo ToDo
 		err = pool.QueryRow(ctx, "SELECT id, name, description, status FROM todos WHERE id = $1", id).Scan(&todo.ID, &todo.Name, &todo.Description, &todo.Status)
 		if err != nil {
+			slog.Error("failed to execute query", "error", err)
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": "failed to get rows",
 			})
 			return
 		}
 
+		slog.Info("Successfully /todos/:id")
 		c.JSON(http.StatusOK, gin.H{
 			"todo": todo,
 		})
@@ -138,11 +148,14 @@ func GetToDoIDHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 
 func PostToDoHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		slog.Info("POST /todos")
+
 		ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
 		defer cancel()
 
 		var todo ToDo
 		if err := c.BindJSON(&todo); err != nil {
+			slog.Error("failed to bind request", "error", err)
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": "failed to bind json",
 			})
@@ -152,12 +165,14 @@ func PostToDoHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 		var id int
 		err := pool.QueryRow(ctx, "INSERT INTO todos (name, description, status) VALUES ($1, $2, $3) RETURNING id", todo.Name, todo.Description, todo.Status).Scan(&id)
 		if err != nil {
+			slog.Error("failed to execute query", "error", err)
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": "failed to insert row",
 			})
 			return
 		}
 
+		slog.Info("Successfully /todos/:id")
 		c.JSON(http.StatusCreated, gin.H{
 			"todo created": todo,
 		})
@@ -166,12 +181,15 @@ func PostToDoHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 
 func DeleteToDoHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		slog.Info("DELETE /todos")
+
 		ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
 		defer cancel()
 
 		paramID := c.Param("id")
 		id, err := strconv.Atoi(paramID)
 		if err != nil {
+			slog.Error("failed to parse param id", "error", err)
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": "invalid id",
 			})
@@ -180,12 +198,14 @@ func DeleteToDoHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 
 		_, err = pool.Exec(ctx, "DELETE FROM todos WHERE id = $1", id)
 		if err != nil {
+			slog.Error("failed to execute query", "error", err)
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": "failed to delete row",
 			})
 			return
 		}
 
+		slog.Info("Successfully /todos/:id")
 		c.JSON(http.StatusOK, gin.H{
 			"todo": "deleted",
 		})
@@ -194,12 +214,15 @@ func DeleteToDoHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 
 func PutToDoHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		slog.Info("PUT /todos")
+
 		ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
 		defer cancel()
 
 		paramID := c.Param("id")
 		id, err := strconv.Atoi(paramID)
 		if err != nil {
+			slog.Error("failed to parse param id", "error", err)
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": "invalid id",
 			})
@@ -208,6 +231,7 @@ func PutToDoHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 
 		var todo ToDo
 		if err := c.BindJSON(&todo); err != nil {
+			slog.Error("failed to bind request", "error", err)
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": "failed to bind json",
 			})
@@ -216,12 +240,14 @@ func PutToDoHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 
 		_, err = pool.Exec(ctx, "UPDATE todos SET name = $1, description = $2, status = $3 WHERE id = $4", todo.Name, todo.Description, todo.Status, id)
 		if err != nil {
+			slog.Error("failed to execute query", "error", err)
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": "failed to update row",
 			})
 			return
 		}
 
+		slog.Info("Successfully /todos/:id")
 		c.JSON(http.StatusOK, gin.H{
 			"todo updated": todo,
 		})
