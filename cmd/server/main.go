@@ -5,6 +5,8 @@ import (
 	"GIN/internal/database"
 	"log/slog"
 	"os"
+
+	"github.com/gin-gonic/gin"
 )
 
 func main() {
@@ -19,4 +21,12 @@ func main() {
 		os.Exit(1)
 	}
 	defer database.Close()
+
+	r := gin.Default()
+
+	slog.Info("Starting server...")
+	if err := r.Run(":8080"); err != nil {
+		slog.Error("server run failed", "err", err)
+		os.Exit(1)
+	}
 }
