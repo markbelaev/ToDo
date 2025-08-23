@@ -3,6 +3,7 @@ package main
 import (
 	"GIN/internal/config"
 	"GIN/internal/database"
+	"GIN/internal/routes"
 	"log/slog"
 	"os"
 
@@ -22,10 +23,12 @@ func main() {
 	}
 	defer database.Close()
 
-	r := gin.Default()
+	router := gin.Default()
+
+	routes.SetupRoutes(router)
 
 	slog.Info("Starting server...")
-	if err := r.Run(":8080"); err != nil {
+	if err := router.Run(":8080"); err != nil {
 		slog.Error("server run failed", "err", err)
 		os.Exit(1)
 	}
