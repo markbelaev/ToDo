@@ -82,3 +82,20 @@ func (r *ToDoRepository) DeleteToDo(ctx context.Context, id int64) error {
 	slog.Info("DeleteToDo success")
 	return nil
 }
+
+func (r *ToDoRepository) CreateToDo(ctx context.Context, todo *models.ToDo) (*models.ToDo, error) {
+	query := "INSERT INTO todos (title, description, status) VALUES ($1, $2, $3) RETURNING id, created_at, updated_at"
+
+	err := r.pool.QueryRow(ctx, query, todo.Title, todo.Description, todo.Status).Scan(
+		&todo.ID,
+		&todo.CreatedAt,
+		&todo.UpdatedAt,
+	)
+	if err != nil {
+		slog.Error("ToDoRepository.CreateToDo Exec:", "error", err)
+		return nil, err
+	}
+
+	slog.Info("CreateToDo success")
+	return todo, nil
+}

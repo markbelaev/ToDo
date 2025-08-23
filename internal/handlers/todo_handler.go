@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"GIN/internal/database"
+	"GIN/internal/models"
 	"GIN/internal/repository"
 	"log/slog"
 	"net/http"
@@ -90,5 +91,31 @@ func (h *ToDoHandler) DeleteToDo(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"todo": "deleted",
+	})
+}
+
+func (h *ToDoHandler) CreateToDo(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	var todo models.ToDo
+	if err := c.ShouldBindJSON(&todo); err != nil {
+		slog.Error("CreateToDo error", "error", err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid request body",
+		})
+		return
+	}
+
+	createdToDo, err := h.repo.CreateToDo(ctx, &todo)
+	if err != nil {
+		slog.Error("CreateToDo error", "error", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Error creating task",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"todo created": createdToDo,
 	})
 }
