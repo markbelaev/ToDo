@@ -9,14 +9,13 @@ import (
 
 func main() {
 	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, nil)))
-
-	slog.Info("Starting application...")
+	slog.Info("Starting...")
 
 	cfg := config.Load()
-	slog.Info("Configuration loaded")
+	slog.Info("Config loaded")
 
 	if err := database.Init(cfg); err != nil {
-		slog.Error("Error initializing database.", "error", err)
+		slog.Error("database init failed", "err", err)
 		os.Exit(1)
 	}
 	defer database.Close()

@@ -17,26 +17,25 @@ func Init(cfg *config.Config) error {
 	defer cancel()
 
 	if cfg.DBConnectionString == "" {
-		slog.Error("DB connection string is empty")
-		return errors.New("DB connection string is empty")
+		return errors.New("DBConnectionString is empty")
 	}
 
-	slog.Info("Connecting to DB...")
+	slog.Info("Connecting to database...")
 
 	poolConfig, err := pgxpool.ParseConfig(cfg.DBConnectionString)
 	if err != nil {
-		slog.Error("DB connection string is wrong", "error", err)
+		slog.Error("Unable to parse database connection string", "error", err)
 		return err
 	}
 
 	Pool, err = pgxpool.NewWithConfig(ctx, poolConfig)
 	if err != nil {
-		slog.Error("DB connection string is wrong", "error", err)
+		slog.Error("Unable to connect to database", "error", err)
 		return err
 	}
 
 	if err := Pool.Ping(ctx); err != nil {
-		slog.Error("DB connection string is wrong", "error", err)
+		slog.Error("Unable to ping database", "error", err)
 		return err
 	}
 
