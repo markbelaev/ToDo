@@ -15,6 +15,7 @@ func SetupRoutes(router *gin.Engine) {
 		v1 := api.Group("/v1")
 		v1.GET("/todos", todoHandler.GetToDos)
 		v1.GET("/todos/:id", todoHandler.GetToDoByID)
+		v1.DELETE("/todos/:id", todoHandler.DeleteToDo)
 	}
 
 	router.GET("/health", func(c *gin.Context) {
