@@ -25,7 +25,7 @@ func NewToDoHandler() *ToDoHandler {
 func (h *ToDoHandler) GetToDos(c *gin.Context) {
 	ctx := c.Request.Context()
 
-	todos, err := h.repo.GetAllToDos(ctx)
+	todos, err := h.repo.GetToDos(ctx)
 	if err != nil {
 		slog.Error("GetAllToDos error", "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -63,5 +63,32 @@ func (h *ToDoHandler) GetToDoByID(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"todo": todo,
+	})
+}
+
+func (h *ToDoHandler) DeleteToDo(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	idParam := c.Param("id")
+	id, err := strconv.ParseInt(idParam, 10, 64)
+	if err != nil {
+		slog.Error("DeleteToDo error", "error", err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid ID",
+		})
+		return
+	}
+
+	err = h.repo.DeleteToDo(ctx, id)
+	if err != nil {
+		slog.Error("DeleteToDo error", "error", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Error deleting the task",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"todo": "deleted",
 	})
 }

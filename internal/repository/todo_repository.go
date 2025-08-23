@@ -18,7 +18,7 @@ func NewToDoRepository(pool *pgxpool.Pool) *ToDoRepository {
 	}
 }
 
-func (r *ToDoRepository) GetAllToDos(ctx context.Context) ([]models.ToDo, error) {
+func (r *ToDoRepository) GetToDos(ctx context.Context) ([]models.ToDo, error) {
 	query := "SELECT id, title, description, status, created_at, updated_at FROM todos"
 
 	rows, err := r.pool.Query(ctx, query)
@@ -69,4 +69,16 @@ func (r *ToDoRepository) GetToDoByID(ctx context.Context, id int64) (*models.ToD
 
 	slog.Info("GetToDoByID success")
 	return &todo, nil
+}
+
+func (r *ToDoRepository) DeleteToDo(ctx context.Context, id int64) error {
+	query := "DELETE FROM todos WHERE id = $1"
+
+	_, err := r.pool.Exec(ctx, query, id)
+	if err != nil {
+		slog.Error("ToDoRepository.DeleteToDo Exec:", "error", err)
+		return err
+	}
+	slog.Info("DeleteToDo success")
+	return nil
 }
