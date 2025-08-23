@@ -13,10 +13,7 @@ func SetupRoutes(router *gin.Engine) {
 	api := router.Group("/api")
 	{
 		v1 := api.Group("/v1")
-		{
-			v1.GET("/todos", todoHandler.GetToDos)
-		}
-
+		v1.GET("/todos", todoHandler.GetToDos)
 	}
 
 	router.GET("/health", func(c *gin.Context) {
