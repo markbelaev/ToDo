@@ -48,8 +48,9 @@ func (r *ToDoRepository) GetToDos(ctx context.Context) ([]models.ToDo, error) {
 
 func (r *ToDoRepository) GetToDoByID(ctx context.Context, id int64) (*models.ToDo, error) {
 	query := `
-		SELECT id, title, description, status, created_at, updated_at 
-		FROM todos WHERE id = $1
+			SELECT id, title, description, status, created_at, updated_at 
+			FROM todos 
+			WHERE id = $1
 		`
 
 	var todo models.ToDo
@@ -62,11 +63,11 @@ func (r *ToDoRepository) GetToDoByID(ctx context.Context, id int64) (*models.ToD
 		&todo.UpdatedAt,
 	)
 	if err != nil {
-		slog.Error("ToDoRepository.GetToDoByID QueryRow:", "error", err)
+		slog.Error("ToDoRepository.GetToDoByID: rows.Scan error:", "error", err)
 		return nil, err
 	}
 
-	slog.Info("GetToDoByID success")
+	slog.Info("ToDoRepository.GetToDoByID: Success")
 	return &todo, nil
 }
 
