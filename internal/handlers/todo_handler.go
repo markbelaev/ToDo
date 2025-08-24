@@ -28,10 +28,7 @@ func (h *ToDoHandler) GetToDos(c *gin.Context) {
 
 	todos, err := h.repo.GetToDos(ctx)
 	if err != nil {
-		slog.Error("GetAllToDos error", "error", err)
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Error getting toDos",
-		})
+		slog.Error("GetToDos err: %v", err)
 		return
 	}
 

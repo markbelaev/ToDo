@@ -20,13 +20,13 @@ func NewToDoRepository(pool *pgxpool.Pool) *ToDoRepository {
 
 func (r *ToDoRepository) GetToDos(ctx context.Context) ([]models.ToDo, error) {
 	query := `
-		SELECT id, title, description, status, created_at, updated_at 
-		FROM todos
-	`
+			SELECT id, title, description, status, created_at, updated_at 
+			FROM todos
+		`
 
 	rows, err := r.pool.Query(ctx, query)
 	if err != nil {
-		slog.Error("ToDoRepository.GetAllToDos Query:", "error", err)
+		slog.Error("ToDoRepository.GetToDos: Query error:", "error", err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -34,22 +34,15 @@ func (r *ToDoRepository) GetToDos(ctx context.Context) ([]models.ToDo, error) {
 	var todos []models.ToDo
 	for rows.Next() {
 		var todo models.ToDo
-		if err := rows.Scan(
-			&todo.ID,
-			&todo.Title,
-			&todo.Description,
-			&todo.Status,
-			&todo.CreatedAt,
-			&todo.UpdatedAt,
-		); err != nil {
-			slog.Error("ToDoRepository.GetAllToDos Scan:", "error", err)
+		if err := rows.Scan(&todo.ID, &todo.Title, &todo.Description, &todo.Status, &todo.CreatedAt, &todo.UpdatedAt); err != nil {
+			slog.Error("ToDoRepository.GetToDos: rows.Scan error:", "error", err)
 			return nil, err
 		}
 
 		todos = append(todos, todo)
 	}
 
-	slog.Info("GetAllToDos success")
+	slog.Info("ToDoRepository.GetToDos: Success")
 	return todos, nil
 }
 
