@@ -119,3 +119,41 @@ func (h *ToDoHandler) CreateToDo(c *gin.Context) {
 		"todo created": createdToDo,
 	})
 }
+
+func (h *ToDoHandler) UpdateToDo(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	idParam := c.Param("id")
+	id, err := strconv.ParseInt(idParam, 10, 64)
+	if err != nil {
+		slog.Error("UpdateToDo error", "error", err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid ID",
+		})
+		return
+	}
+
+	var todo models.ToDo
+	if err := c.ShouldBindJSON(&todo); err != nil {
+		slog.Error("UpdateToDo error", "error", err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid request body",
+		})
+		return
+	}
+
+	todo.ID = int(id)
+
+	updatedToDo, err := h.repo.PutToDo(ctx, &todo)
+	if err != nil {
+		slog.Error("UpdateToDo error", "error", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Error updating the task",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"todo updated": updatedToDo,
+	})
+}

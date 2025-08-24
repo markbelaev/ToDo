@@ -17,6 +17,7 @@ func SetupRoutes(router *gin.Engine) {
 		v1.GET("/todos/:id", todoHandler.GetToDoByID)
 		v1.DELETE("/todos/:id", todoHandler.DeleteToDo)
 		v1.POST("/todos", todoHandler.CreateToDo)
+		v1.PUT("/todos/:id", todoHandler.UpdateToDo)
 	}
 
 	router.GET("/health", func(c *gin.Context) {

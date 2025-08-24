@@ -19,7 +19,10 @@ func NewToDoRepository(pool *pgxpool.Pool) *ToDoRepository {
 }
 
 func (r *ToDoRepository) GetToDos(ctx context.Context) ([]models.ToDo, error) {
-	query := "SELECT id, title, description, status, created_at, updated_at FROM todos"
+	query := `
+		SELECT id, title, description, status, created_at, updated_at 
+		FROM todos
+	`
 
 	rows, err := r.pool.Query(ctx, query)
 	if err != nil {
@@ -51,7 +54,10 @@ func (r *ToDoRepository) GetToDos(ctx context.Context) ([]models.ToDo, error) {
 }
 
 func (r *ToDoRepository) GetToDoByID(ctx context.Context, id int64) (*models.ToDo, error) {
-	query := "SELECT id, title, description, status, created_at, updated_at FROM todos WHERE id = $1"
+	query := `
+		SELECT id, title, description, status, created_at, updated_at 
+		FROM todos WHERE id = $1
+		`
 
 	var todo models.ToDo
 	err := r.pool.QueryRow(ctx, query, id).Scan(
@@ -72,7 +78,10 @@ func (r *ToDoRepository) GetToDoByID(ctx context.Context, id int64) (*models.ToD
 }
 
 func (r *ToDoRepository) DeleteToDo(ctx context.Context, id int64) error {
-	query := "DELETE FROM todos WHERE id = $1"
+	query := `
+			DELETE FROM todos 
+			WHERE id = $1
+		`
 
 	_, err := r.pool.Exec(ctx, query, id)
 	if err != nil {
@@ -84,7 +93,11 @@ func (r *ToDoRepository) DeleteToDo(ctx context.Context, id int64) error {
 }
 
 func (r *ToDoRepository) CreateToDo(ctx context.Context, todo *models.ToDo) (*models.ToDo, error) {
-	query := "INSERT INTO todos (title, description, status) VALUES ($1, $2, $3) RETURNING id, created_at, updated_at"
+	query := `
+		INSERT INTO todos (title, description, status) 
+		VALUES ($1, $2, $3) 
+		RETURNING id, created_at, updated_at
+	`
 
 	err := r.pool.QueryRow(ctx, query, todo.Title, todo.Description, todo.Status).Scan(
 		&todo.ID,
@@ -97,5 +110,31 @@ func (r *ToDoRepository) CreateToDo(ctx context.Context, todo *models.ToDo) (*mo
 	}
 
 	slog.Info("CreateToDo success")
+	return todo, nil
+}
+
+func (r *ToDoRepository) PutToDo(ctx context.Context, todo *models.ToDo) (*models.ToDo, error) {
+	query := `
+			UPDATE  todos 
+			SET title = $1, description = $2, status = $3, updated_at = NOW() 
+			WHERE id = $4 
+			RETURNING id, title, description, status, created_at, updated_at
+		`
+
+	err := r.pool.QueryRow(ctx,
+		query, todo.Title, todo.Description, todo.Status, todo.ID).Scan(
+		&todo.ID,
+		&todo.Title,
+		&todo.Description,
+		&todo.Status,
+		&todo.CreatedAt,
+		&todo.UpdatedAt,
+	)
+	if err != nil {
+		slog.Error("ToDoRepository.PutToDo Exec:", "error", err)
+		return nil, err
+	}
+
+	slog.Info("PutToDo success")
 	return todo, nil
 }
